@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HYACINTH PRIME</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: black;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .chat-container {
+      width: 70%;
+      height: 80%;
+      display: flex;
+      flex-direction: column;
+      background: rgba(50, 0, 80, 0.9);
+      border: 2px solid purple;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 0 25px purple;
+    }
+    h1 {
+      text-align: center;
+      color: purple;
+      font-family: 'Georgia', serif;
+      margin: 0 0 10px 0;
+    }
+    #chatOutput {
+      flex: 1;
+      overflow-y: auto;
+      background: rgba(255,255,255,0.1);
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    input, button {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      margin: 5px;
+    }
+    input {
+      flex: 1;
+    }
+    button {
+      background: purple;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: white;
+      color: purple;
+    }
+    .input-row {
+      display: flex;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <h1>HYACINTH PRIME 🌸</h1>
+    <div id="chatOutput"></div>
+    <div class="input-row">
+      <input id="userInput" type="text" placeholder="Ask me something...">
+      <button onclick="chat()">Send</button>
+    </div>
+    <input type="file" id="imageInput" accept="image/*">
+  </div>
+
+  <script>
+    // Hugging Face API key
+    const HF_API_KEY = "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";
+
+    async function getAIResponse(userInput) {
+      const response = await fetch("https://api-inference.huggingface.co/models/EleutherAI/gpt-neo-1.3B", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + HF_API_KEY,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ inputs: userInput })
+      });
+      const data = await response.json();
+      console.log(data); // Debugging: check response in console
+      if (Array.isArray(data) && data.length > 0 && data[0].generated_text) {
+        return data[0].generated_text;
+      } else if (data.generated_text) {
+        return data.generated_text;
+      } else if (data.error) {
+        return "Error: " + data.error;
+      } else {
+        return "No response: " + JSON.stringify(data);
+      }
+    }
+
+    async function chat() {
+      const input = document.getElementById("userInput").value;
+      const chatOutput = document.getElementById("chatOutput");
+      chatOutput.innerHTML += "<p><b>You:</b> " + input + "</p>";
+      chatOutput.scrollTop = chatOutput.scrollHeight;
+
+      const output = await getAIResponse("You are Hyacinth Prime, a study and research partner. " + input);
+      chatOutput.innerHTML += "<p><b>Hyacinth Prime:</b> " + output + "</p>";
+      chatOutput.scrollTop = chatOutput.scrollHeight;
+    }
+
+    // Image upload preview
+    document.getElementById("imageInput").addEventListener("change", function(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const chatOutput = document.getElementById("chatOutput");
+          chatOutput.innerHTML += "<p><b>You sent an image:</b><br><img src='" + e.target.result + "' width='200'></p>";
+          chatOutput.scrollTop = chatOutput.scrollHeight;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  </script>
+</body>
+</html>
